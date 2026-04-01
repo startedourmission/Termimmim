@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Termimmim - Terminal Simulator</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="terminal">
+    <div id="terminal-header">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+      <span id="terminal-title">termimmim</span>
+    </div>
+    <div id="terminal-body" tabindex="0">
+      <div id="output"></div>
+      <div id="input-line">
+        <span id="prompt"></span>
+        <span id="input-wrapper">
+          <span id="input-left"></span>
+          <span id="cursor">&nbsp;</span>
+          <span id="input-right"></span>
+        </span>
+      </div>
+    </div>
+  </div>
+  <input id="hidden-input" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false">
+  <script src="js/filesystem.js"></script>
+  <script src="js/git.js"></script>
+  <script src="js/commands.js"></script>
+  <script src="js/terminal.js"></script>
+</body>
+</html>
