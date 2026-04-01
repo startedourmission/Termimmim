@@ -197,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <span class="color-gray">Terminal Simulator for Practice - Type "help" to get started</span>`;
   }
   addOutput(getWelcome());
+  addOutput('<span class="color-gray">터미널의 궁금한 부분을 눌러보세요!</span>');
 
   updatePrompt();
   updateInput();
