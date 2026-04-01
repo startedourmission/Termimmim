@@ -156,55 +156,61 @@ document.addEventListener('DOMContentLoaded', () => {
   updateInput();
   scrollToBottom();
 
+  // Sync hidden input with our buffer
+  function syncHiddenInput() {
+    hiddenInput.value = inputBuffer;
+    hiddenInput.selectionStart = cursorPos;
+    hiddenInput.selectionEnd = cursorPos;
+  }
+
   // Focus handling
   terminalBody.addEventListener('click', () => {
     hiddenInput.focus();
   });
 
+  // Prevent terminal body from losing focus on touch
+  terminalBody.addEventListener('touchstart', () => {
+    setTimeout(() => hiddenInput.focus(), 10);
+  });
+
   // Auto-focus on load
   hiddenInput.focus();
 
-  // Keyboard events
-  document.addEventListener('keydown', (e) => {
-    // Redirect focus to hidden input for mobile
-    if (document.activeElement !== hiddenInput) {
-      hiddenInput.focus();
-    }
+  // Mobile input: use the input event as the primary source of typed characters
+  let composing = false;
 
-    switch (e.key) {
+  hiddenInput.addEventListener('compositionstart', () => { composing = true; });
+  hiddenInput.addEventListener('compositionend', () => {
+    composing = false;
+    // After composition ends, sync from hidden input
+    inputBuffer = hiddenInput.value;
+    cursorPos = hiddenInput.selectionStart || inputBuffer.length;
+    updateInput();
+    scrollToBottom();
+  });
+
+  hiddenInput.addEventListener('input', (e) => {
+    if (composing) return;
+
+    // Sync our buffer from the hidden input's actual value
+    inputBuffer = hiddenInput.value;
+    cursorPos = hiddenInput.selectionStart || inputBuffer.length;
+    updateInput();
+    scrollToBottom();
+  });
+
+  // Keyboard events - for special keys (Enter, Backspace, arrows, ctrl combos)
+  hiddenInput.addEventListener('keydown', (e) => {
+    const key = e.key;
+
+    switch (key) {
       case 'Enter':
         e.preventDefault();
         processCommand(inputBuffer);
         inputBuffer = '';
         cursorPos = 0;
         updateInput();
-        break;
-
-      case 'Backspace':
-        e.preventDefault();
-        if (cursorPos > 0) {
-          inputBuffer = inputBuffer.slice(0, cursorPos - 1) + inputBuffer.slice(cursorPos);
-          cursorPos--;
-          updateInput();
-        }
-        break;
-
-      case 'Delete':
-        e.preventDefault();
-        if (cursorPos < inputBuffer.length) {
-          inputBuffer = inputBuffer.slice(0, cursorPos) + inputBuffer.slice(cursorPos + 1);
-          updateInput();
-        }
-        break;
-
-      case 'ArrowLeft':
-        e.preventDefault();
-        if (cursorPos > 0) { cursorPos--; updateInput(); }
-        break;
-
-      case 'ArrowRight':
-        e.preventDefault();
-        if (cursorPos < inputBuffer.length) { cursorPos++; updateInput(); }
+        syncHiddenInput();
         break;
 
       case 'ArrowUp':
@@ -219,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
           inputBuffer = commandHistory[historyIndex];
           cursorPos = inputBuffer.length;
           updateInput();
+          syncHiddenInput();
         }
         break;
 
@@ -234,24 +241,14 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           cursorPos = inputBuffer.length;
           updateInput();
+          syncHiddenInput();
         }
         break;
 
       case 'Tab':
         e.preventDefault();
         handleTab();
-        break;
-
-      case 'Home':
-        e.preventDefault();
-        cursorPos = 0;
-        updateInput();
-        break;
-
-      case 'End':
-        e.preventDefault();
-        cursorPos = inputBuffer.length;
-        updateInput();
+        syncHiddenInput();
         break;
 
       case 'c':
@@ -261,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
           inputBuffer = '';
           cursorPos = 0;
           updateInput();
+          syncHiddenInput();
           updatePrompt();
           scrollToBottom();
         }
@@ -279,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
           e.preventDefault();
           cursorPos = 0;
           updateInput();
+          syncHiddenInput();
         }
         break;
 
@@ -287,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
           e.preventDefault();
           cursorPos = inputBuffer.length;
           updateInput();
+          syncHiddenInput();
         }
         break;
 
@@ -296,6 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
           inputBuffer = inputBuffer.slice(cursorPos);
           cursorPos = 0;
           updateInput();
+          syncHiddenInput();
         }
         break;
 
@@ -304,17 +305,16 @@ document.addEventListener('DOMContentLoaded', () => {
           e.preventDefault();
           inputBuffer = inputBuffer.slice(0, cursorPos);
           updateInput();
+          syncHiddenInput();
         }
         break;
+    }
+  });
 
-      default:
-        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-          e.preventDefault();
-          inputBuffer = inputBuffer.slice(0, cursorPos) + e.key + inputBuffer.slice(cursorPos);
-          cursorPos++;
-          updateInput();
-        }
-        break;
+  // Also listen on document for when hidden input isn't focused (desktop fallback)
+  document.addEventListener('keydown', (e) => {
+    if (document.activeElement !== hiddenInput) {
+      hiddenInput.focus();
     }
   });
 });
