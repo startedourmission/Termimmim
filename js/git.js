@@ -30,7 +30,7 @@ class GitRepo {
     if (err) return { error: err };
 
     const lines = [];
-    lines.push(`<span class="tip" data-tip="현재 작업 중인 브랜치입니다">On branch ${this.currentBranch}</span>`);
+    lines.push(`<span class="tip" data-tip="${I18N.t('tip.git.onbranch')}">On branch ${this.currentBranch}</span>`);
 
     if (this.commits.length === 0) {
       lines.push('', 'No commits yet', '');
@@ -41,11 +41,11 @@ class GitRepo {
     // Staged files
     const stagedFiles = [...new Set(this.staged)];
     if (stagedFiles.length > 0) {
-      lines.push('<span class="tip" data-tip="git add로 스테이징된 파일들. commit하면 이 변경사항이 저장됩니다">Changes to be committed:</span>');
+      lines.push(`<span class="tip" data-tip="${I18N.t('tip.git.staged')}">Changes to be committed:</span>`);
       lines.push('  (use "git restore --staged <file>" to unstage)');
       for (const f of stagedFiles) {
         const isNew = !this.tracking[f];
-        const tipMsg = isNew ? '새로 추가된 파일 (git이 처음 추적)' : '수정된 파일 (이전 커밋과 다름)';
+        const tipMsg = isNew ? I18N.t('tip.git.newfile') : I18N.t('tip.git.modified');
         lines.push(`\t<span class="tip" data-tip="${tipMsg}"><span class="color-green">${isNew ? 'new file' : 'modified'}:   ${f}</span></span>`);
       }
       lines.push('');
@@ -63,10 +63,10 @@ class GitRepo {
       }
     }
     if (modified.length > 0) {
-      lines.push('<span class="tip" data-tip="변경되었지만 아직 git add 하지 않은 파일들입니다">Changes not staged for commit:</span>');
+      lines.push(`<span class="tip" data-tip="${I18N.t('tip.git.notstaged')}">Changes not staged for commit:</span>`);
       lines.push('  (use "git add <file>" to update what will be committed)');
       for (const m of modified) {
-        const tipMsg = m.status === 'deleted' ? '파일이 삭제되었습니다' : '파일이 수정되었지만 아직 스테이징되지 않았습니다';
+        const tipMsg = m.status === 'deleted' ? I18N.t('tip.git.deleted') : I18N.t('tip.git.unstaged_modified');
         lines.push(`\t<span class="tip" data-tip="${tipMsg}"><span class="color-red">${m.status}:   ${m.path}</span></span>`);
       }
       lines.push('');
@@ -76,10 +76,10 @@ class GitRepo {
     const allFiles = fs.getAllFiles();
     const untracked = allFiles.filter(f => !this.tracking.hasOwnProperty(f) && !this.staged.includes(f));
     if (untracked.length > 0) {
-      lines.push('<span class="tip" data-tip="git이 아직 추적하지 않는 새 파일들입니다. git add로 추적을 시작하세요">Untracked files:</span>');
+      lines.push(`<span class="tip" data-tip="${I18N.t('tip.git.untracked')}">Untracked files:</span>`);
       lines.push('  (use "git add <file>" to include in what will be committed)');
       for (const f of untracked) {
-        lines.push(`\t<span class="tip" data-tip="추적되지 않는 파일 — git add ${f} 로 추가하세요"><span class="color-red">${f}</span></span>`);
+        lines.push(`\t<span class="tip" data-tip="${I18N.t('tip.git.untracked_file')}"><span class="color-red">${f}</span></span>`);
       }
       lines.push('');
     }

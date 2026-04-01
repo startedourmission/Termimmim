@@ -28,8 +28,9 @@
 <body>
   <div id="page">
     <header id="page-header">
+      <button id="lang-toggle" title="Switch language"></button>
       <a href="./" id="title-link"><h1>Termimmim</h1></a>
-      <p>Browser-based terminal simulator for practice</p>
+      <p data-i18n="header.subtitle"></p>
       <p class="made-by">made by <a href="https://startedourmission.github.io/" target="_blank" rel="noopener">startedourmission</a></p>
     </header>
 
@@ -55,66 +56,66 @@
       </div>
 
       <section id="guide">
-        <h2>Quick Reference</h2>
+        <h2 data-i18n="guide.title"></h2>
         <div id="guide-grid">
           <div class="guide-card">
-            <h3>File System</h3>
+            <h3 data-i18n="guide.fs.title"></h3>
             <ul>
-              <li><code>ls</code> - list files</li>
-              <li><code>cd &lt;dir&gt;</code> - change directory</li>
-              <li><code>mkdir &lt;dir&gt;</code> - create directory</li>
-              <li><code>touch &lt;file&gt;</code> - create file</li>
-              <li><code>cat &lt;file&gt;</code> - view file</li>
-              <li><code>rm &lt;file&gt;</code> - remove file</li>
-              <li><code>find . -name "*.txt"</code> - find files</li>
-              <li><code>chmod 755 &lt;file&gt;</code> - permissions</li>
+              <li><code>ls</code> - <span data-i18n="guide.fs.ls"></span></li>
+              <li><code>cd &lt;dir&gt;</code> - <span data-i18n="guide.fs.cd"></span></li>
+              <li><code>mkdir &lt;dir&gt;</code> - <span data-i18n="guide.fs.mkdir"></span></li>
+              <li><code>touch &lt;file&gt;</code> - <span data-i18n="guide.fs.touch"></span></li>
+              <li><code>cat &lt;file&gt;</code> - <span data-i18n="guide.fs.cat"></span></li>
+              <li><code>rm &lt;file&gt;</code> - <span data-i18n="guide.fs.rm"></span></li>
+              <li><code>find . -name "*.txt"</code> - <span data-i18n="guide.fs.find"></span></li>
+              <li><code>chmod 755 &lt;file&gt;</code> - <span data-i18n="guide.fs.chmod"></span></li>
             </ul>
           </div>
           <div class="guide-card">
-            <h3>Git Basics</h3>
+            <h3 data-i18n="guide.git.title"></h3>
             <ul>
-              <li><code>git init</code> - initialize repo</li>
-              <li><code>git add &lt;file&gt;</code> - stage changes</li>
-              <li><code>git commit -m "msg"</code> - commit</li>
-              <li><code>git status</code> - check status</li>
-              <li><code>git log</code> - view history</li>
-              <li><code>git diff</code> - see changes</li>
+              <li><code>git init</code> - <span data-i18n="guide.git.init"></span></li>
+              <li><code>git add &lt;file&gt;</code> - <span data-i18n="guide.git.add"></span></li>
+              <li><code>git commit -m "msg"</code> - <span data-i18n="guide.git.commit"></span></li>
+              <li><code>git status</code> - <span data-i18n="guide.git.status"></span></li>
+              <li><code>git log</code> - <span data-i18n="guide.git.log"></span></li>
+              <li><code>git diff</code> - <span data-i18n="guide.git.diff"></span></li>
             </ul>
           </div>
           <div class="guide-card">
-            <h3>Git Branches</h3>
+            <h3 data-i18n="guide.branch.title"></h3>
             <ul>
-              <li><code>git branch</code> - list branches</li>
-              <li><code>git branch &lt;name&gt;</code> - create</li>
-              <li><code>git checkout &lt;br&gt;</code> - switch</li>
-              <li><code>git checkout -b &lt;br&gt;</code> - create & switch</li>
-              <li><code>git merge &lt;br&gt;</code> - merge</li>
-              <li><code>git branch -d &lt;br&gt;</code> - delete</li>
+              <li><code>git branch</code> - <span data-i18n="guide.branch.list"></span></li>
+              <li><code>git branch &lt;name&gt;</code> - <span data-i18n="guide.branch.create"></span></li>
+              <li><code>git checkout &lt;br&gt;</code> - <span data-i18n="guide.branch.switch"></span></li>
+              <li><code>git checkout -b &lt;br&gt;</code> - <span data-i18n="guide.branch.create_switch"></span></li>
+              <li><code>git merge &lt;br&gt;</code> - <span data-i18n="guide.branch.merge"></span></li>
+              <li><code>git branch -d &lt;br&gt;</code> - <span data-i18n="guide.branch.delete"></span></li>
             </ul>
           </div>
           <div class="guide-card">
-            <h3>Pipe & Text</h3>
+            <h3 data-i18n="guide.pipe.title"></h3>
             <ul>
-              <li><code>cmd1 | cmd2</code> - pipe output</li>
-              <li><code>grep [-iv] pat</code> - search</li>
-              <li><code>sort [-rn]</code> - sort lines</li>
-              <li><code>uniq [-c]</code> - deduplicate</li>
-              <li><code>sed 's/a/b/g'</code> - replace</li>
-              <li><code>alias ll='ls -la'</code> - alias</li>
-              <li><code>echo -e "a\nb"</code> - escapes</li>
+              <li><code>cmd1 | cmd2</code> - <span data-i18n="guide.pipe.pipe"></span></li>
+              <li><code>grep [-iv] pat</code> - <span data-i18n="guide.pipe.grep"></span></li>
+              <li><code>sort [-rn]</code> - <span data-i18n="guide.pipe.sort"></span></li>
+              <li><code>uniq [-c]</code> - <span data-i18n="guide.pipe.uniq"></span></li>
+              <li><code>sed 's/a/b/g'</code> - <span data-i18n="guide.pipe.sed"></span></li>
+              <li><code>alias ll='ls -la'</code> - <span data-i18n="guide.pipe.alias"></span></li>
+              <li><code>echo -e "a\nb"</code> - <span data-i18n="guide.pipe.echo"></span></li>
             </ul>
           </div>
           <div class="guide-card">
-            <h3>Vi Editor</h3>
+            <h3 data-i18n="guide.vi.title"></h3>
             <ul>
-              <li><code>vi &lt;file&gt;</code> - open editor</li>
-              <li><kbd>i</kbd> - insert mode</li>
-              <li><kbd>Esc</kbd> - normal mode</li>
-              <li><code>:w</code> - save</li>
-              <li><code>:q</code> - quit</li>
-              <li><code>:wq</code> - save & quit</li>
-              <li><kbd>dd</kbd> - delete line</li>
-              <li><kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd> - move cursor</li>
+              <li><code>vi &lt;file&gt;</code> - <span data-i18n="guide.vi.open"></span></li>
+              <li><kbd>i</kbd> - <span data-i18n="guide.vi.insert"></span></li>
+              <li><kbd>Esc</kbd> - <span data-i18n="guide.vi.normal"></span></li>
+              <li><code>:w</code> - <span data-i18n="guide.vi.save"></span></li>
+              <li><code>:q</code> - <span data-i18n="guide.vi.quit"></span></li>
+              <li><code>:wq</code> - <span data-i18n="guide.vi.savequit"></span></li>
+              <li><kbd>dd</kbd> - <span data-i18n="guide.vi.dd"></span></li>
+              <li><kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd> - <span data-i18n="guide.vi.move"></span></li>
             </ul>
           </div>
         </div>
@@ -122,11 +123,12 @@
     </main>
 
     <footer id="page-footer">
-      <p>Type <code>help</code> in the terminal to see all commands</p>
+      <p data-i18n-html="footer.help"></p>
     </footer>
   </div>
 
   <input id="hidden-input" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send">
+  <script src="js/i18n.js"></script>
   <script src="js/filesystem.js"></script>
   <script src="js/git.js"></script>
   <script src="js/vi.js"></script>

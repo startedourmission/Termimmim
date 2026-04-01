@@ -22,12 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = fs.env?.USER || 'user';
     const shortPath = fs.getShortPath();
     const pathTip = shortPath === '~'
-      ? '~ 는 홈 디렉토리(/home/user)를 의미합니다'
-      : `현재 위치: ${fs.currentPath}`;
+      ? I18N.t('tip.home')
+      : I18N.t('tip.path') + fs.currentPath;
     const branch = git.initialized
-      ? ` <span class="tip" data-tip="현재 작업 중인 git 브랜치입니다"><span class="color-cyan">(${git.currentBranch})</span></span>`
+      ? ` <span class="tip" data-tip="${I18N.t('tip.branch')}"><span class="color-cyan">(${git.currentBranch})</span></span>`
       : '';
-    return `<span class="tip" data-tip="사용자이름@호스트이름 — 현재 로그인한 사용자와 컴퓨터 이름입니다"><span class="color-green bold">${user}@termimmim</span></span>:<span class="tip" data-tip="${pathTip}"><span class="color-blue bold">${shortPath}</span></span>${branch}<span class="tip" data-tip="$ 는 일반 사용자를 의미합니다 (# 이면 root)">$</span> `;
+    return `<span class="tip" data-tip="${I18N.t('tip.userhost')}"><span class="color-green bold">${user}@termimmim</span></span>:<span class="tip" data-tip="${pathTip}"><span class="color-blue bold">${shortPath}</span></span>${branch}<span class="tip" data-tip="${I18N.t('tip.dollar')}">$</span> `;
   }
 
   function getPromptText() {
@@ -196,8 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
    |_| |_____|_| \\_\\_|  |_|___|_|  |_|_|  |_|___|_|  |_|</span>
 <span class="color-gray">Terminal Simulator for Practice - Type "help" to get started</span>`;
   }
+  I18N.init();
+
   addOutput(getWelcome());
-  addOutput('<span class="color-gray">터미널의 궁금한 부분을 눌러보세요!</span>');
+  addOutput(`<span class="color-gray">${I18N.t('welcome.hint')}</span>`);
 
   updatePrompt();
   updateInput();
@@ -423,4 +425,26 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('keydown', () => removeBubble(), true);
+
+  // i18n: render all data-i18n elements
+  function renderI18N() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = I18N.t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      el.innerHTML = I18N.t(el.dataset.i18nHtml);
+    });
+    const btn = document.getElementById('lang-toggle');
+    if (btn) btn.textContent = I18N.t('lang.button');
+    document.documentElement.lang = I18N.lang === 'ko' ? 'ko' : 'en';
+  }
+
+  renderI18N();
+
+  document.getElementById('lang-toggle').addEventListener('click', (e) => {
+    e.preventDefault();
+    I18N.toggle();
+    renderI18N();
+    updatePrompt();
+  });
 });

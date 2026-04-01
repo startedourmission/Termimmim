@@ -257,8 +257,8 @@ class CommandHandler {
         }
         const permTip = this._explainPerm(perm);
         const cls = e.type === 'dir' ? 'dir-entry' : 'file-entry';
-        const typeTip = e.type === 'dir' ? '디렉토리(폴더)입니다' : '일반 파일입니다';
-        return `<span class="tip" data-tip="${permTip}">${perm}</span>  <span class="tip" data-tip="소유자(owner)">user</span> <span class="tip" data-tip="그룹(group)">user</span>  <span class="tip" data-tip="${typeTip}"><span class="${cls}">${e.name}</span></span>`;
+        const typeTip = e.type === 'dir' ? I18N.t('tip.isdir') : I18N.t('tip.isfile');
+        return `<span class="tip" data-tip="${permTip}">${perm}</span>  <span class="tip" data-tip="${I18N.t('tip.owner')}">user</span> <span class="tip" data-tip="${I18N.t('tip.group')}">user</span>  <span class="tip" data-tip="${typeTip}"><span class="${cls}">${e.name}</span></span>`;
       }).join('\n');
     }
 
@@ -727,18 +727,18 @@ class CommandHandler {
   }
 
   _explainPerm(perm) {
-    const type = perm[0] === 'd' ? '디렉토리' : perm[0] === 'l' ? '심볼릭 링크' : '파일';
+    const type = perm[0] === 'd' ? I18N.t('tip.perm.dir') : perm[0] === 'l' ? I18N.t('tip.perm.link') : I18N.t('tip.perm.file');
     const explain = (s) => {
-      let r = '';
-      r += s[0] === 'r' ? '읽기 ' : '';
-      r += s[1] === 'w' ? '쓰기 ' : '';
-      r += s[2] === 'x' ? '실행' : '';
-      return r.trim() || '없음';
+      let parts = [];
+      if (s[0] === 'r') parts.push(I18N.t('tip.perm.read'));
+      if (s[1] === 'w') parts.push(I18N.t('tip.perm.write'));
+      if (s[2] === 'x') parts.push(I18N.t('tip.perm.exec'));
+      return parts.length ? parts.join(' ') : I18N.t('tip.perm.none');
     };
     const owner = explain(perm.slice(1, 4));
     const group = explain(perm.slice(4, 7));
     const other = explain(perm.slice(7, 10));
-    return `${type} | 소유자: ${owner} | 그룹: ${group} | 기타: ${other}`;
+    return `${type} | ${I18N.t('tip.perm.owner')}: ${owner} | ${I18N.t('tip.perm.group')}: ${group} | ${I18N.t('tip.perm.other')}: ${other}`;
   }
 
   _escapeHtml(text) {
