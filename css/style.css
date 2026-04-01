@@ -242,6 +242,33 @@ body {
 .file-entry { color: #e6edf3; }
 .exec-entry { color: #7ee787; }
 
+/* ── Vi Editor ── */
+.vi-cursor {
+  background: #e6edf3;
+  color: #0d1117;
+}
+
+.vi-cmd-cursor {
+  background: #e6edf3;
+  color: #0d1117;
+}
+
+.vi-status-bar {
+  background: #e6edf3;
+  color: #0d1117;
+  padding: 0 4px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+
+.vi-status-insert {
+  color: #0d1117;
+  font-weight: bold;
+}
+
 /* ── Mobile ── */
 @media (max-width: 600px) {
   #page {

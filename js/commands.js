@@ -65,6 +65,8 @@ class CommandHandler {
       tail: () => this._tail(args),
       wc: () => this._wc(args),
       grep: () => this._grep(args),
+      vi: () => this._vi(args),
+      vim: () => this._vi(args),
       man: () => `No manual entry for ${args[0] || '???'}. Try "help" instead.`,
     };
 
@@ -123,6 +125,9 @@ class CommandHandler {
   tail [-n N] <file> Show last N lines
   wc <file>          Count lines, words, chars
   grep <pat> <file>  Search in file
+
+<span class="color-green">Editor:</span>
+  vi <file>          Open file in vi editor
 
 <span class="color-green">Other:</span>
   whoami             Print current user
@@ -384,6 +389,13 @@ class CommandHandler {
   git checkout -b <branch> Create and switch to a branch
   git merge <branch>       Merge a branch into current
   git restore --staged <f> Unstage a file`;
+  }
+
+  _vi(args) {
+    if (args.length === 0) return '<span class="color-red">usage: vi &lt;file&gt;</span>';
+    if (!this.openVi) return '<span class="color-red">vi: editor not available</span>';
+    const err = this.openVi(args[0]);
+    return err || '';
   }
 
   _escapeHtml(text) {

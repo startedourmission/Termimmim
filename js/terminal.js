@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fs = new FileSystem();
   const git = new GitRepo();
   const handler = new CommandHandler(fs, git);
+  let viEditor = null;
 
   const outputEl = document.getElementById('output');
   const promptEl = document.getElementById('prompt');
@@ -60,6 +61,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // Vi integration
+  function openVi(path) {
+    const terminalRef = {
+      exitVi: () => {
+        viEditor = null;
+        outputEl.innerHTML = '';
+        updatePrompt();
+        updateInput();
+        syncHiddenInput();
+        scrollToBottom();
+      }
+    };
+    viEditor = new ViEditor(fs, terminalRef);
+    const err = viEditor.open(path);
+    if (err) {
+      viEditor = null;
+      return err;
+    }
+    return null;
+  }
+
+  // Make openVi available to CommandHandler
+  handler.openVi = openVi;
+
   function processCommand(input) {
     addPromptLine(input);
 
@@ -97,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Command completion
       const cmds = ['ls', 'cd', 'pwd', 'cat', 'echo', 'mkdir', 'touch', 'rm', 'cp', 'mv',
         'clear', 'whoami', 'date', 'history', 'git', 'help', 'export', 'env',
-        'which', 'head', 'tail', 'wc', 'grep', 'man'];
+        'which', 'head', 'tail', 'wc', 'grep', 'vi', 'vim', 'man'];
       completions = cmds.filter(c => c.startsWith(partial));
     } else {
       // File/dir completion
@@ -141,16 +166,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Welcome message
-  addOutput(`<span class="bold color-cyan">
-  _____ _____ ____  __  __ ___ __  __ __  __ ___ __  __
+  // Welcome message - responsive ASCII art
+  function getWelcome() {
+    const narrow = window.innerWidth < 500;
+    if (narrow) {
+      return `<span class="bold color-cyan">TERMIMMIM</span>
+<span class="color-gray">Terminal Simulator</span>
+<span class="color-gray">Type "help" to get started</span>`;
+    }
+    return `<span class="bold color-cyan">  _____ _____ ____  __  __ ___ __  __ __  __ ___ __  __
  |_   _| ____|  _ \\|  \\/  |_ _|  \\/  |  \\/  |_ _|  \\/  |
    | | |  _| | |_) | |\\/| || || |\\/| | |\\/| || || |\\/| |
-   | | | |___|  _ <| |  | || || |  | | |  | || || |  | |
-   |_| |_____|_| \\_\\_|  |_|___|_|  |_|_|  |_|___|_|  |_|
-</span>
-<span class="color-gray">Terminal Simulator for Practice - Type "help" to get started</span>
-`);
+   | | | |___|  _ &lt;| |  | || || |  | | |  | || || |  | |
+   |_| |_____|_| \\_\\_|  |_|___|_|  |_|_|  |_|___|_|  |_|</span>
+<span class="color-gray">Terminal Simulator for Practice - Type "help" to get started</span>`;
+  }
+  addOutput(getWelcome());
 
   updatePrompt();
   updateInput();
@@ -192,6 +223,17 @@ document.addEventListener('DOMContentLoaded', () => {
   hiddenInput.addEventListener('input', (e) => {
     if (composing) return;
 
+    if (viEditor && viEditor.active) {
+      // In vi mode, extract what was typed
+      const newVal = hiddenInput.value;
+      if (viEditor.mode === 'insert' && newVal.length > 0) {
+        // Find what changed
+        viEditor.handleInput(newVal);
+      }
+      hiddenInput.value = '';
+      return;
+    }
+
     // Sync our buffer from the hidden input's actual value
     inputBuffer = hiddenInput.value;
     cursorPos = hiddenInput.selectionStart || inputBuffer.length;
@@ -203,6 +245,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // All normal character input is handled by the 'input' event above
   hiddenInput.addEventListener('keydown', (e) => {
     const key = e.key;
+
+    // Vi mode: route all keydown to vi
+    if (viEditor && viEditor.active) {
+      e.preventDefault();
+      hiddenInput.value = '';
+      viEditor.handleKey(key, e.ctrlKey, e.shiftKey);
+      return;
+    }
 
     // Ctrl combos (desktop only)
     if (e.ctrlKey && !e.metaKey) {
