@@ -199,10 +199,58 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollToBottom();
   });
 
-  // Keyboard events - for special keys (Enter, Backspace, arrows, ctrl combos)
+  // Keyboard events - only special keys and ctrl combos
+  // All normal character input is handled by the 'input' event above
   hiddenInput.addEventListener('keydown', (e) => {
     const key = e.key;
 
+    // Ctrl combos (desktop only)
+    if (e.ctrlKey && !e.metaKey) {
+      switch (key) {
+        case 'c':
+          e.preventDefault();
+          addPromptLine(inputBuffer + '^C');
+          inputBuffer = '';
+          cursorPos = 0;
+          updateInput();
+          syncHiddenInput();
+          updatePrompt();
+          scrollToBottom();
+          return;
+        case 'l':
+          e.preventDefault();
+          outputEl.innerHTML = '';
+          scrollToBottom();
+          return;
+        case 'a':
+          e.preventDefault();
+          cursorPos = 0;
+          updateInput();
+          syncHiddenInput();
+          return;
+        case 'e':
+          e.preventDefault();
+          cursorPos = inputBuffer.length;
+          updateInput();
+          syncHiddenInput();
+          return;
+        case 'u':
+          e.preventDefault();
+          inputBuffer = inputBuffer.slice(cursorPos);
+          cursorPos = 0;
+          updateInput();
+          syncHiddenInput();
+          return;
+        case 'k':
+          e.preventDefault();
+          inputBuffer = inputBuffer.slice(0, cursorPos);
+          updateInput();
+          syncHiddenInput();
+          return;
+      }
+    }
+
+    // Special keys
     switch (key) {
       case 'Enter':
         e.preventDefault();
@@ -250,68 +298,10 @@ document.addEventListener('DOMContentLoaded', () => {
         handleTab();
         syncHiddenInput();
         break;
-
-      case 'c':
-        if (e.ctrlKey) {
-          e.preventDefault();
-          addPromptLine(inputBuffer + '^C');
-          inputBuffer = '';
-          cursorPos = 0;
-          updateInput();
-          syncHiddenInput();
-          updatePrompt();
-          scrollToBottom();
-        }
-        break;
-
-      case 'l':
-        if (e.ctrlKey) {
-          e.preventDefault();
-          outputEl.innerHTML = '';
-          scrollToBottom();
-        }
-        break;
-
-      case 'a':
-        if (e.ctrlKey) {
-          e.preventDefault();
-          cursorPos = 0;
-          updateInput();
-          syncHiddenInput();
-        }
-        break;
-
-      case 'e':
-        if (e.ctrlKey) {
-          e.preventDefault();
-          cursorPos = inputBuffer.length;
-          updateInput();
-          syncHiddenInput();
-        }
-        break;
-
-      case 'u':
-        if (e.ctrlKey) {
-          e.preventDefault();
-          inputBuffer = inputBuffer.slice(cursorPos);
-          cursorPos = 0;
-          updateInput();
-          syncHiddenInput();
-        }
-        break;
-
-      case 'k':
-        if (e.ctrlKey) {
-          e.preventDefault();
-          inputBuffer = inputBuffer.slice(0, cursorPos);
-          updateInput();
-          syncHiddenInput();
-        }
-        break;
     }
   });
 
-  // Also listen on document for when hidden input isn't focused (desktop fallback)
+  // Redirect focus when typing outside hidden input (desktop)
   document.addEventListener('keydown', (e) => {
     if (document.activeElement !== hiddenInput) {
       hiddenInput.focus();
