@@ -11,10 +11,11 @@ class FileSystem {
               children: {
                 'welcome.txt': {
                   type: 'file',
+                  mode: '644',
                   content: 'Welcome to Termimmim!\nType "help" to see available commands.\nType "git help" to see git commands.\n'
                 },
-                projects: { type: 'dir', children: {} },
-                documents: { type: 'dir', children: {} },
+                projects: { type: 'dir', mode: '755', children: {} },
+                documents: { type: 'dir', mode: '755', children: {} },
               }
             }
           }
@@ -103,7 +104,7 @@ class FileSystem {
     if (append && parent.children[name]) {
       parent.children[name].content += content;
     } else {
-      parent.children[name] = { type: 'file', content: content };
+      parent.children[name] = { type: 'file', mode: '644', content: content };
     }
     return {};
   }
@@ -112,7 +113,7 @@ class FileSystem {
     const { parent, name } = this.getParentAndName(path);
     if (!parent) return { error: `mkdir: cannot create directory '${path}': No such file or directory` };
     if (parent.children[name]) return { error: `mkdir: cannot create directory '${path}': File exists` };
-    parent.children[name] = { type: 'dir', children: {} };
+    parent.children[name] = { type: 'dir', mode: '755', children: {} };
     return {};
   }
 
@@ -184,6 +185,37 @@ class FileSystem {
     if (this.currentPath === '/home/user') return '~';
     if (this.currentPath.startsWith('/home/user/')) return '~' + this.currentPath.slice(10);
     return this.currentPath;
+  }
+
+  modeToString(node) {
+    const mode = node.mode || (node.type === 'dir' ? '755' : '644');
+    const map = { '0': '---', '1': '--x', '2': '-w-', '3': '-wx', '4': 'r--', '5': 'r-x', '6': 'rw-', '7': 'rwx' };
+    const prefix = node.type === 'dir' ? 'd' : '-';
+    return prefix + (mode.split('').map(d => map[d] || '---').join(''));
+  }
+
+  chmod(path, mode) {
+    const node = this.getNode(path);
+    if (!node) return { error: `chmod: cannot access '${path}': No such file or directory` };
+    node.mode = mode;
+    return {};
+  }
+
+  // Get all entries (files and dirs) under a directory recursively
+  getAllEntries(path, prefix) {
+    const resolved = this.resolvePath(path || '.');
+    const node = this.getNode(resolved);
+    if (!node || node.type !== 'dir') return [];
+    prefix = prefix || '.';
+    const entries = [];
+    for (const [name, child] of Object.entries(node.children)) {
+      const fullName = prefix + '/' + name;
+      entries.push({ name: fullName, type: child.type });
+      if (child.type === 'dir') {
+        entries.push(...this.getAllEntries(resolved + '/' + name, fullName));
+      }
+    }
+    return entries;
   }
 
   // Get all file paths under a directory (recursive)

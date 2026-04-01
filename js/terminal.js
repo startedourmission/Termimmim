@@ -129,7 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Command completion
       const cmds = ['ls', 'cd', 'pwd', 'cat', 'echo', 'mkdir', 'touch', 'rm', 'cp', 'mv',
         'clear', 'whoami', 'date', 'history', 'git', 'help', 'export', 'env',
-        'which', 'head', 'tail', 'wc', 'grep', 'vi', 'vim', 'man'];
+        'which', 'head', 'tail', 'wc', 'grep', 'sort', 'uniq', 'find', 'sed',
+        'chmod', 'alias', 'unalias', 'vi', 'vim', 'man'];
       completions = cmds.filter(c => c.startsWith(partial));
     } else {
       // File/dir completion

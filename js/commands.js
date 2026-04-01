@@ -2,6 +2,8 @@ class CommandHandler {
   constructor(fs, git) {
     this.fs = fs;
     this.git = git;
+    this.aliases = {};
+    this.stdin = null; // piped input
     this.env = {
       USER: 'user',
       HOME: '/home/user',
@@ -12,9 +14,65 @@ class CommandHandler {
     const trimmed = input.trim();
     if (!trimmed) return '';
 
-    // Handle echo with redirect
-    const redirectAppend = trimmed.match(/^(.+?)>>(.+)$/);
-    const redirectWrite = trimmed.match(/^(.+?)(?<!>)>([^>].*)$/);
+    // Expand alias (first word only)
+    const expanded = this._expandAlias(trimmed);
+
+    // Handle pipes: split on | outside quotes
+    const pipeSegments = this._splitPipes(expanded);
+    if (pipeSegments.length > 1) {
+      return this._executePipeline(pipeSegments);
+    }
+
+    return this._executeOne(expanded);
+  }
+
+  _expandAlias(input) {
+    const firstSpace = input.indexOf(' ');
+    const cmd = firstSpace > 0 ? input.slice(0, firstSpace) : input;
+    const rest = firstSpace > 0 ? input.slice(firstSpace) : '';
+    if (this.aliases[cmd]) {
+      return this.aliases[cmd] + rest;
+    }
+    return input;
+  }
+
+  _splitPipes(input) {
+    const segments = [];
+    let current = '';
+    let inSingle = false;
+    let inDouble = false;
+
+    for (let i = 0; i < input.length; i++) {
+      const ch = input[i];
+      if (ch === "'" && !inDouble) { inSingle = !inSingle; current += ch; continue; }
+      if (ch === '"' && !inSingle) { inDouble = !inDouble; current += ch; continue; }
+      if (ch === '|' && !inSingle && !inDouble) {
+        segments.push(current.trim());
+        current = '';
+        continue;
+      }
+      current += ch;
+    }
+    if (current.trim()) segments.push(current.trim());
+    return segments;
+  }
+
+  _executePipeline(segments) {
+    let output = '';
+    for (let i = 0; i < segments.length; i++) {
+      if (i > 0) {
+        this.stdin = this._stripHtml(output);
+      }
+      output = this._executeOne(segments[i]);
+      this.stdin = null;
+    }
+    return output;
+  }
+
+  _executeOne(input) {
+    // Handle redirect at the end
+    const redirectAppend = input.match(/^(.+?)>>(.+)$/);
+    const redirectWrite = input.match(/^(.+?)(?<!>)>([^>].*)$/);
 
     if (redirectAppend) {
       const output = this._runCommand(redirectAppend[1].trim());
@@ -31,7 +89,7 @@ class CommandHandler {
       return result.error || '';
     }
 
-    return this._runCommand(trimmed);
+    return this._runCommand(input);
   }
 
   _runCommand(input) {
@@ -65,6 +123,13 @@ class CommandHandler {
       tail: () => this._tail(args),
       wc: () => this._wc(args),
       grep: () => this._grep(args),
+      sort: () => this._sort(args),
+      uniq: () => this._uniq(args),
+      find: () => this._find(args),
+      sed: () => this._sed(args),
+      chmod: () => this._chmod(args),
+      alias: () => this._alias(args),
+      unalias: () => this._unalias(args),
       vi: () => this._vi(args),
       vim: () => this._vi(args),
       man: () => `No manual entry for ${args[0] || '???'}. Try "help" instead.`,
@@ -88,7 +153,6 @@ class CommandHandler {
         if (current) { parts.push(current); current = ''; }
         continue;
       }
-      // Expand $VAR in double quotes or unquoted
       if (ch === '$' && !inSingle) {
         let varName = '';
         let j = i + 1;
@@ -107,49 +171,62 @@ class CommandHandler {
     return parts;
   }
 
+  // Get text input: from stdin (pipe) or from a file arg
+  _getInput(args) {
+    if (this.stdin) return this.stdin;
+    const file = args.find(a => !a.startsWith('-'));
+    if (!file) return null;
+    const result = this.fs.readFile(file);
+    if (result.error) return result;
+    return result.content;
+  }
+
   _help() {
     return `<span class="bold color-cyan">Available Commands:</span>
 
 <span class="color-green">File System:</span>
-  ls [path]          List directory contents
-  cd [path]          Change directory
-  pwd                Print working directory
-  cat <file>         Display file contents
-  echo <text>        Print text (supports > and >>)
-  mkdir <dir>        Create directory
-  touch <file>       Create empty file
-  rm [-r] <path>     Remove file or directory
-  cp <src> <dest>    Copy file
-  mv <src> <dest>    Move/rename file
-  head [-n N] <file> Show first N lines
-  tail [-n N] <file> Show last N lines
-  wc <file>          Count lines, words, chars
-  grep <pat> <file>  Search in file
+  ls [path]            List directory contents
+  cd [path]            Change directory
+  pwd                  Print working directory
+  cat <file>           Display file contents
+  echo [-n] [-e] <txt> Print text (supports > and >>)
+  mkdir <dir>          Create directory
+  touch <file>         Create empty file
+  rm [-r] <path>       Remove file or directory
+  cp <src> <dest>      Copy file
+  mv <src> <dest>      Move/rename file
+  find [path] -name p  Find files by name
+  chmod <mode> <file>  Change file permissions
+  head [-n N] <file>   Show first N lines
+  tail [-n N] <file>   Show last N lines
+
+<span class="color-green">Text Processing:</span>
+  grep <pat> [file]    Search (supports pipe)
+  sed 's/a/b/' [file]  Stream editor
+  sort [file]          Sort lines
+  uniq [file]          Remove duplicate lines
+  wc [file]            Count lines, words, chars
 
 <span class="color-green">Editor:</span>
-  vi <file>          Open file in vi editor
+  vi [file]            Open file in vi editor
 
 <span class="color-green">Other:</span>
-  whoami             Print current user
-  date               Print current date
-  clear              Clear terminal
-  history            Show command history
-  env                Show environment variables
-  export KEY=VALUE   Set environment variable
-  help               Show this help
+  alias [name=cmd]     Define/list aliases
+  unalias <name>       Remove alias
+  whoami               Print current user
+  date                 Print current date
+  clear                Clear terminal
+  history              Show command history
+  env                  Show environment variables
+  export KEY=VALUE     Set environment variable
+  help                 Show this help
+
+<span class="color-green">Pipe:</span>
+  cmd1 | cmd2          Pipe output of cmd1 to cmd2
+  Example: cat file | grep error | sort | uniq
 
 <span class="color-green">Git Commands:</span>
-  git init           Initialize a repository
-  git status         Show working tree status
-  git add <file>     Stage changes
-  git commit -m "msg" Record changes
-  git log            Show commit history
-  git branch [name]  List/create branches
-  git checkout <br>  Switch branches
-  git checkout -b <br> Create and switch branch
-  git merge <branch> Merge branch
-  git diff           Show changes
-  git help           Show git help`;
+  git help             Show git commands`;
   }
 
   _ls(args) {
@@ -169,8 +246,15 @@ class CommandHandler {
     if (entries.length === 0) return '';
 
     if (showLong) {
+      const resolvedDir = this.fs.resolvePath(path || '.');
       return entries.map(e => {
-        const perm = e.type === 'dir' ? 'drwxr-xr-x' : '-rw-r--r--';
+        let perm;
+        if (e.name === '.' || e.name === '..') {
+          perm = 'drwxr-xr-x';
+        } else {
+          const node = this.fs.getNode(resolvedDir + '/' + e.name);
+          perm = node ? this.fs.modeToString(node) : (e.type === 'dir' ? 'drwxr-xr-x' : '-rw-r--r--');
+        }
         const cls = e.type === 'dir' ? 'dir-entry' : 'file-entry';
         return `${perm}  user user  <span class="${cls}">${e.name}</span>`;
       }).join('\n');
@@ -188,6 +272,7 @@ class CommandHandler {
   }
 
   _cat(args) {
+    if (this.stdin) return this._escapeHtml(this.stdin);
     if (args.length === 0) return '<span class="color-red">cat: missing operand</span>';
     const outputs = [];
     for (const a of args) {
@@ -199,7 +284,26 @@ class CommandHandler {
   }
 
   _echo(args) {
-    return args.join(' ');
+    let noNewline = false;
+    let escapes = false;
+    const textArgs = [];
+
+    for (const a of args) {
+      if (a === '-n') { noNewline = true; continue; }
+      if (a === '-e') { escapes = true; continue; }
+      textArgs.push(a);
+    }
+
+    let text = textArgs.join(' ');
+
+    if (escapes) {
+      text = text
+        .replace(/\\n/g, '\n')
+        .replace(/\\t/g, '\t')
+        .replace(/\\\\/g, '\\');
+    }
+
+    return text;
   }
 
   _mkdir(args) {
@@ -247,58 +351,280 @@ class CommandHandler {
 
   _head(args) {
     let n = 10;
-    let file = null;
+    const fileArgs = [];
     for (let i = 0; i < args.length; i++) {
       if (args[i] === '-n' && args[i + 1]) { n = parseInt(args[++i]); }
-      else file = args[i];
+      else fileArgs.push(args[i]);
     }
-    if (!file) return '<span class="color-red">head: missing operand</span>';
-    const result = this.fs.readFile(file);
-    if (result.error) return `<span class="color-red">${result.error}</span>`;
-    return this._escapeHtml(result.content.split('\n').slice(0, n).join('\n'));
+    const input = this._getInput(fileArgs);
+    if (input === null) return '<span class="color-red">head: missing operand</span>';
+    if (input.error) return `<span class="color-red">${input.error}</span>`;
+    const text = typeof input === 'string' ? input : '';
+    return this._escapeHtml(text.split('\n').slice(0, n).join('\n'));
   }
 
   _tail(args) {
     let n = 10;
-    let file = null;
+    const fileArgs = [];
     for (let i = 0; i < args.length; i++) {
       if (args[i] === '-n' && args[i + 1]) { n = parseInt(args[++i]); }
-      else file = args[i];
+      else fileArgs.push(args[i]);
     }
-    if (!file) return '<span class="color-red">tail: missing operand</span>';
-    const result = this.fs.readFile(file);
-    if (result.error) return `<span class="color-red">${result.error}</span>`;
-    return this._escapeHtml(result.content.split('\n').slice(-n).join('\n'));
+    const input = this._getInput(fileArgs);
+    if (input === null) return '<span class="color-red">tail: missing operand</span>';
+    if (input.error) return `<span class="color-red">${input.error}</span>`;
+    const text = typeof input === 'string' ? input : '';
+    return this._escapeHtml(text.split('\n').slice(-n).join('\n'));
   }
 
   _wc(args) {
-    if (args.length === 0) return '<span class="color-red">wc: missing operand</span>';
-    const result = this.fs.readFile(args[0]);
-    if (result.error) return `<span class="color-red">${result.error}</span>`;
-    const lines = result.content.split('\n').length;
-    const words = result.content.split(/\s+/).filter(Boolean).length;
-    const chars = result.content.length;
-    return `  ${lines}  ${words}  ${chars} ${args[0]}`;
+    const input = this._getInput(args);
+    if (input === null) return '<span class="color-red">wc: missing operand</span>';
+    if (input.error) return `<span class="color-red">${input.error}</span>`;
+    const text = typeof input === 'string' ? input : '';
+    const lines = text.split('\n').length;
+    const words = text.split(/\s+/).filter(Boolean).length;
+    const chars = text.length;
+    const file = args.find(a => !a.startsWith('-')) || '';
+    return `  ${lines}  ${words}  ${chars}${file ? ' ' + file : ''}`;
   }
 
   _grep(args) {
-    if (args.length < 2) return '<span class="color-red">usage: grep pattern file</span>';
-    const pattern = args[0];
-    const file = args[1];
-    const result = this.fs.readFile(file);
-    if (result.error) return `<span class="color-red">${result.error}</span>`;
+    if (args.length === 0) return '<span class="color-red">usage: grep pattern [file]</span>';
+
+    let caseInsensitive = false;
+    let invert = false;
+    let countOnly = false;
+    const realArgs = [];
+
+    for (const a of args) {
+      if (a === '-i') { caseInsensitive = true; continue; }
+      if (a === '-v') { invert = true; continue; }
+      if (a === '-c') { countOnly = true; continue; }
+      realArgs.push(a);
+    }
+
+    const pattern = realArgs[0];
+    if (!pattern) return '<span class="color-red">usage: grep pattern [file]</span>';
+
+    // Get text from pipe or file
+    let text;
+    if (this.stdin) {
+      text = this.stdin;
+    } else if (realArgs[1]) {
+      const result = this.fs.readFile(realArgs[1]);
+      if (result.error) return `<span class="color-red">${result.error}</span>`;
+      text = result.content;
+    } else {
+      return '<span class="color-red">usage: grep pattern [file]</span>';
+    }
+
     try {
-      const regex = new RegExp(pattern, 'g');
-      const matches = result.content.split('\n').filter(line => regex.test(line));
-      regex.lastIndex = 0;
+      const flags = caseInsensitive ? 'gi' : 'g';
+      const regex = new RegExp(pattern, flags);
+      const lines = text.split('\n');
+      const matches = lines.filter(line => {
+        regex.lastIndex = 0;
+        const m = regex.test(line);
+        return invert ? !m : m;
+      });
+
+      if (countOnly) return String(matches.length);
+
       return matches.map(l => {
         const escaped = this._escapeHtml(l);
-        return escaped.replace(new RegExp(this._escapeHtml(pattern), 'g'),
-          m => `<span class="color-red bold">${m}</span>`);
+        try {
+          const highlightFlags = caseInsensitive ? 'gi' : 'g';
+          return escaped.replace(new RegExp(this._escapeHtml(pattern), highlightFlags),
+            m => `<span class="color-red bold">${m}</span>`);
+        } catch {
+          return escaped;
+        }
       }).join('\n');
     } catch {
       return '<span class="color-red">grep: invalid regular expression</span>';
     }
+  }
+
+  _sort(args) {
+    let reverse = args.includes('-r');
+    let numeric = args.includes('-n');
+    const input = this._getInput(args.filter(a => !a.startsWith('-')));
+    if (input === null) return '';
+    if (input.error) return `<span class="color-red">${input.error}</span>`;
+    const text = typeof input === 'string' ? input : '';
+    let lines = text.split('\n');
+    if (numeric) {
+      lines.sort((a, b) => parseFloat(a) - parseFloat(b));
+    } else {
+      lines.sort();
+    }
+    if (reverse) lines.reverse();
+    return this._escapeHtml(lines.join('\n'));
+  }
+
+  _uniq(args) {
+    let countMode = args.includes('-c');
+    const input = this._getInput(args.filter(a => !a.startsWith('-')));
+    if (input === null) return '';
+    if (input.error) return `<span class="color-red">${input.error}</span>`;
+    const text = typeof input === 'string' ? input : '';
+    const lines = text.split('\n');
+    const result = [];
+
+    if (countMode) {
+      let count = 1;
+      for (let i = 1; i <= lines.length; i++) {
+        if (i < lines.length && lines[i] === lines[i - 1]) {
+          count++;
+        } else {
+          result.push(`      ${count} ${lines[i - 1]}`);
+          count = 1;
+        }
+      }
+    } else {
+      for (let i = 0; i < lines.length; i++) {
+        if (i === 0 || lines[i] !== lines[i - 1]) {
+          result.push(lines[i]);
+        }
+      }
+    }
+    return this._escapeHtml(result.join('\n'));
+  }
+
+  _find(args) {
+    let searchPath = '.';
+    let namePattern = null;
+    let typeFilter = null;
+
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '-name' && args[i + 1]) {
+        namePattern = args[++i];
+      } else if (args[i] === '-type' && args[i + 1]) {
+        typeFilter = args[++i]; // f or d
+        i++;
+      } else if (!args[i].startsWith('-')) {
+        searchPath = args[i];
+      }
+    }
+
+    const entries = this.fs.getAllEntries(searchPath, searchPath === '.' ? '.' : searchPath);
+
+    // Always include the root search path
+    let results = [{ name: searchPath === '.' ? '.' : searchPath, type: 'dir' }, ...entries];
+
+    if (namePattern) {
+      // Convert glob to regex: * -> .*, ? -> .
+      const regexStr = '^' + namePattern.replace(/\./g, '\\.').replace(/\*/g, '.*').replace(/\?/g, '.') + '$';
+      const regex = new RegExp(regexStr);
+      results = results.filter(e => {
+        const basename = e.name.split('/').pop();
+        return regex.test(basename);
+      });
+    }
+
+    if (typeFilter) {
+      if (typeFilter === 'f') results = results.filter(e => e.type === 'file');
+      if (typeFilter === 'd') results = results.filter(e => e.type === 'dir');
+    }
+
+    return results.map(e => {
+      const cls = e.type === 'dir' ? 'color-blue' : '';
+      return cls ? `<span class="${cls}">${e.name}</span>` : e.name;
+    }).join('\n');
+  }
+
+  _sed(args) {
+    if (args.length === 0) return '<span class="color-red">usage: sed \'s/pattern/replace/[flags]\' [file]</span>';
+
+    const expr = args[0];
+    const inPlace = args.includes('-i');
+    const fileArgs = args.filter(a => a !== '-i' && a !== expr);
+
+    // Parse s/pattern/replacement/flags
+    const match = expr.match(/^s(.)(.+?)\1(.*?)\1([gi]*)$/);
+    if (!match) return '<span class="color-red">sed: invalid expression</span>';
+
+    const [, , pattern, replacement, flags] = match;
+
+    // Get input text
+    let text;
+    const fileName = fileArgs[0];
+    if (this.stdin) {
+      text = this.stdin;
+    } else if (fileName) {
+      const result = this.fs.readFile(fileName);
+      if (result.error) return `<span class="color-red">${result.error}</span>`;
+      text = result.content;
+    } else {
+      return '<span class="color-red">sed: no input</span>';
+    }
+
+    try {
+      const regex = new RegExp(pattern, flags.includes('g') ? 'g' : '');
+      const output = text.split('\n').map(line => line.replace(regex, replacement)).join('\n');
+
+      if (inPlace && fileName) {
+        this.fs.writeFile(fileName, output, false);
+        return '';
+      }
+
+      return this._escapeHtml(output);
+    } catch {
+      return '<span class="color-red">sed: invalid regular expression</span>';
+    }
+  }
+
+  _chmod(args) {
+    if (args.length < 2) return '<span class="color-red">usage: chmod &lt;mode&gt; &lt;file&gt;</span>';
+    const mode = args[0];
+    const path = args[1];
+
+    // Validate mode (simple: 3 octal digits)
+    if (!/^[0-7]{3}$/.test(mode)) {
+      return `<span class="color-red">chmod: invalid mode: '${mode}' (use 3 octal digits, e.g. 755)</span>`;
+    }
+
+    const result = this.fs.chmod(path, mode);
+    return result.error ? `<span class="color-red">${result.error}</span>` : '';
+  }
+
+  _alias(args) {
+    if (args.length === 0) {
+      // List all aliases
+      const entries = Object.entries(this.aliases);
+      if (entries.length === 0) return '';
+      return entries.map(([k, v]) => `alias ${k}='${v}'`).join('\n');
+    }
+
+    for (const a of args) {
+      const eq = a.indexOf('=');
+      if (eq > 0) {
+        const name = a.slice(0, eq);
+        const value = a.slice(eq + 1);
+        this.aliases[name] = value;
+      } else {
+        // Show single alias
+        if (this.aliases[a]) {
+          return `alias ${a}='${this.aliases[a]}'`;
+        }
+        return `<span class="color-red">alias: ${a}: not found</span>`;
+      }
+    }
+    return '';
+  }
+
+  _unalias(args) {
+    if (args.length === 0) return '<span class="color-red">unalias: usage: unalias name</span>';
+    for (const a of args) {
+      if (a === '-a') {
+        this.aliases = {};
+        return '';
+      }
+      if (!this.aliases[a]) return `<span class="color-red">unalias: ${a}: not found</span>`;
+      delete this.aliases[a];
+    }
+    return '';
   }
 
   _export(args) {
