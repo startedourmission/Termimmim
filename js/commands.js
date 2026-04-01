@@ -255,8 +255,10 @@ class CommandHandler {
           const node = this.fs.getNode(resolvedDir + '/' + e.name);
           perm = node ? this.fs.modeToString(node) : (e.type === 'dir' ? 'drwxr-xr-x' : '-rw-r--r--');
         }
+        const permTip = this._explainPerm(perm);
         const cls = e.type === 'dir' ? 'dir-entry' : 'file-entry';
-        return `${perm}  user user  <span class="${cls}">${e.name}</span>`;
+        const typeTip = e.type === 'dir' ? '디렉토리(폴더)입니다' : '일반 파일입니다';
+        return `<span class="tip" data-tip="${permTip}">${perm}</span>  <span class="tip" data-tip="소유자(owner)">user</span> <span class="tip" data-tip="그룹(group)">user</span>  <span class="tip" data-tip="${typeTip}"><span class="${cls}">${e.name}</span></span>`;
       }).join('\n');
     }
 
@@ -721,6 +723,21 @@ class CommandHandler {
     if (!this.openVi) return '<span class="color-red">vi: editor not available</span>';
     const err = this.openVi(args[0] || '');
     return err || '';
+  }
+
+  _explainPerm(perm) {
+    const type = perm[0] === 'd' ? '디렉토리' : perm[0] === 'l' ? '심볼릭 링크' : '파일';
+    const explain = (s) => {
+      let r = '';
+      r += s[0] === 'r' ? '읽기 ' : '';
+      r += s[1] === 'w' ? '쓰기 ' : '';
+      r += s[2] === 'x' ? '실행' : '';
+      return r.trim() || '없음';
+    };
+    const owner = explain(perm.slice(1, 4));
+    const group = explain(perm.slice(4, 7));
+    const other = explain(perm.slice(7, 10));
+    return `${type} | 소유자: ${owner} | 그룹: ${group} | 기타: ${other}`;
   }
 
   _escapeHtml(text) {

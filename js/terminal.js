@@ -19,8 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let tempInput = '';
 
   function getPrompt() {
-    const branch = git.initialized ? ` <span class="color-cyan">(${git.currentBranch})</span>` : '';
-    return `<span class="color-green bold">${fs.env?.USER || 'user'}@termimmim</span>:<span class="color-blue bold">${fs.getShortPath()}</span>${branch}$ `;
+    const user = fs.env?.USER || 'user';
+    const shortPath = fs.getShortPath();
+    const pathTip = shortPath === '~'
+      ? '~ 는 홈 디렉토리(/home/user)를 의미합니다'
+      : `현재 위치: ${fs.currentPath}`;
+    const branch = git.initialized
+      ? ` <span class="tip" data-tip="현재 작업 중인 git 브랜치입니다"><span class="color-cyan">(${git.currentBranch})</span></span>`
+      : '';
+    return `<span class="tip" data-tip="사용자이름@호스트이름 — 현재 로그인한 사용자와 컴퓨터 이름입니다"><span class="color-green bold">${user}@termimmim</span></span>:<span class="tip" data-tip="${pathTip}"><span class="color-blue bold">${shortPath}</span></span>${branch}<span class="tip" data-tip="$ 는 일반 사용자를 의미합니다 (# 이면 root)">$</span> `;
   }
 
   function getPromptText() {
@@ -365,4 +372,54 @@ document.addEventListener('DOMContentLoaded', () => {
       hiddenInput.focus();
     }
   });
+
+  // Tooltip system
+  let activeBubble = null;
+
+  function removeBubble() {
+    if (activeBubble) {
+      activeBubble.remove();
+      activeBubble = null;
+    }
+  }
+
+  terminalBody.addEventListener('click', (e) => {
+    const tip = e.target.closest('.tip');
+    removeBubble();
+
+    if (tip && tip.dataset.tip) {
+      e.stopPropagation();
+      const bubble = document.createElement('span');
+      bubble.className = 'tip-bubble';
+      bubble.textContent = tip.dataset.tip;
+      tip.appendChild(bubble);
+      activeBubble = bubble;
+
+      // Adjust if overflowing left/right
+      const rect = bubble.getBoundingClientRect();
+      const bodyRect = terminalBody.getBoundingClientRect();
+      if (rect.left < bodyRect.left) {
+        bubble.style.left = '0';
+        bubble.style.transform = 'none';
+      } else if (rect.right > bodyRect.right) {
+        bubble.style.left = 'auto';
+        bubble.style.right = '0';
+        bubble.style.transform = 'none';
+      }
+
+      // If overflowing top, show below instead
+      if (rect.top < bodyRect.top) {
+        bubble.style.bottom = 'auto';
+        bubble.style.top = 'calc(100% + 8px)';
+        // Flip arrow
+        bubble.style.setProperty('--arrow-dir', 'bottom');
+      }
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.tip')) removeBubble();
+  });
+
+  document.addEventListener('keydown', () => removeBubble(), true);
 });
