@@ -143,7 +143,7 @@ class ViEditor {
       this._handleCommand(key);
     }
 
-    this.render();
+    if (this.active) this.render();
   }
 
   _handleNormal(key, ctrl) {

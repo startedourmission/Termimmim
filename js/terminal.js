@@ -67,9 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
       exitVi: () => {
         viEditor = null;
         outputEl.innerHTML = '';
+        inputBuffer = '';
+        cursorPos = 0;
+        hiddenInput.value = '';
         updatePrompt();
         updateInput();
         syncHiddenInput();
+        hiddenInput.focus();
         scrollToBottom();
       }
     };
