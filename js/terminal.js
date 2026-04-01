@@ -62,11 +62,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Vi integration
+  let savedOutput = '';
+
   function openVi(path) {
+    savedOutput = outputEl.innerHTML;
     const terminalRef = {
       exitVi: () => {
         viEditor = null;
-        outputEl.innerHTML = '';
+        outputEl.innerHTML = savedOutput;
         inputBuffer = '';
         cursorPos = 0;
         hiddenInput.value = '';
