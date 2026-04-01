@@ -5,23 +5,48 @@
 }
 
 body {
-  background: #1a1a2e;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: #0f0f1a;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #c9d1d9;
   min-height: 100vh;
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-  padding: 20px;
 }
 
+#page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+/* ── Header ── */
+#page-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+#page-header h1 {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 28px;
+  color: #e6edf3;
+  letter-spacing: 2px;
+}
+
+#page-header p {
+  color: #8b949e;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+/* ── Terminal ── */
 #terminal {
   width: 100%;
-  max-width: 900px;
-  height: 85vh;
+  height: 55vh;
+  min-height: 320px;
   background: #0d1117;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
 }
@@ -49,6 +74,7 @@ body {
   color: #8b949e;
   font-size: 13px;
   margin-left: 8px;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
 }
 
 #terminal-body {
@@ -56,6 +82,7 @@ body {
   padding: 16px;
   overflow-y: auto;
   color: #e6edf3;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.6;
   cursor: text;
@@ -107,6 +134,84 @@ body {
   50% { background: transparent; color: #e6edf3; }
 }
 
+/* ── Guide Section ── */
+#guide {
+  margin-top: 32px;
+}
+
+#guide h2 {
+  font-size: 18px;
+  color: #e6edf3;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #21262d;
+}
+
+#guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.guide-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+
+.guide-card h3 {
+  font-size: 14px;
+  color: #a5d6ff;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.guide-card ul {
+  list-style: none;
+}
+
+.guide-card li {
+  font-size: 13px;
+  color: #8b949e;
+  padding: 3px 0;
+  line-height: 1.5;
+}
+
+.guide-card code {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  color: #e6edf3;
+  background: rgba(110, 118, 129, 0.15);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.guide-card kbd {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 11px;
+  color: #e6edf3;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 1px 6px;
+  box-shadow: 0 1px 0 #30363d;
+}
+
+/* ── Footer ── */
+#page-footer {
+  text-align: center;
+  margin-top: 32px;
+  color: #484f58;
+  font-size: 13px;
+}
+
+#page-footer code {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  color: #8b949e;
+}
+
+/* ── Hidden Input ── */
 #hidden-input {
   position: fixed;
   bottom: 0;
@@ -118,10 +223,11 @@ body {
   outline: none;
   background: transparent;
   color: transparent;
-  font-size: 16px; /* prevents iOS zoom on focus */
+  font-size: 16px;
   z-index: -1;
 }
 
+/* ── Color classes ── */
 .color-green { color: #7ee787; }
 .color-blue { color: #79c0ff; }
 .color-yellow { color: #e3b341; }
@@ -136,12 +242,36 @@ body {
 .file-entry { color: #e6edf3; }
 .exec-entry { color: #7ee787; }
 
+/* ── Mobile ── */
 @media (max-width: 600px) {
-  body { padding: 0; }
-  #terminal {
-    height: 100vh;
-    border-radius: 0;
-    max-width: 100%;
+  #page {
+    padding: 16px 12px 32px;
   }
-  #terminal-body { font-size: 12px; padding: 10px; }
+
+  #page-header {
+    margin-bottom: 20px;
+  }
+
+  #page-header h1 {
+    font-size: 22px;
+  }
+
+  #terminal {
+    height: 50vh;
+    min-height: 280px;
+    border-radius: 8px;
+  }
+
+  #terminal-body {
+    font-size: 12px;
+    padding: 10px;
+  }
+
+  #guide-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-card {
+    padding: 12px 16px;
+  }
 }

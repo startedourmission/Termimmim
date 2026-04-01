@@ -7,25 +7,91 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div id="terminal">
-    <div id="terminal-header">
-      <span class="dot red"></span>
-      <span class="dot yellow"></span>
-      <span class="dot green"></span>
-      <span id="terminal-title">termimmim</span>
-    </div>
-    <div id="terminal-body" tabindex="0">
-      <div id="output"></div>
-      <div id="input-line">
-        <span id="prompt"></span>
-        <span id="input-wrapper">
-          <span id="input-left"></span>
-          <span id="cursor">&nbsp;</span>
-          <span id="input-right"></span>
-        </span>
+  <div id="page">
+    <header id="page-header">
+      <h1>Termimmim</h1>
+      <p>Browser-based terminal simulator for practice</p>
+    </header>
+
+    <main id="content">
+      <div id="terminal">
+        <div id="terminal-header">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span id="terminal-title">termimmim</span>
+        </div>
+        <div id="terminal-body" tabindex="0">
+          <div id="output"></div>
+          <div id="input-line">
+            <span id="prompt"></span>
+            <span id="input-wrapper">
+              <span id="input-left"></span>
+              <span id="cursor">&nbsp;</span>
+              <span id="input-right"></span>
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <section id="guide">
+        <h2>Quick Reference</h2>
+        <div id="guide-grid">
+          <div class="guide-card">
+            <h3>File System</h3>
+            <ul>
+              <li><code>ls</code> - list files</li>
+              <li><code>cd &lt;dir&gt;</code> - change directory</li>
+              <li><code>mkdir &lt;dir&gt;</code> - create directory</li>
+              <li><code>touch &lt;file&gt;</code> - create file</li>
+              <li><code>cat &lt;file&gt;</code> - view file</li>
+              <li><code>rm &lt;file&gt;</code> - remove file</li>
+              <li><code>cp &lt;src&gt; &lt;dest&gt;</code> - copy</li>
+              <li><code>mv &lt;src&gt; &lt;dest&gt;</code> - move</li>
+            </ul>
+          </div>
+          <div class="guide-card">
+            <h3>Git Basics</h3>
+            <ul>
+              <li><code>git init</code> - initialize repo</li>
+              <li><code>git add &lt;file&gt;</code> - stage changes</li>
+              <li><code>git commit -m "msg"</code> - commit</li>
+              <li><code>git status</code> - check status</li>
+              <li><code>git log</code> - view history</li>
+              <li><code>git diff</code> - see changes</li>
+            </ul>
+          </div>
+          <div class="guide-card">
+            <h3>Git Branches</h3>
+            <ul>
+              <li><code>git branch</code> - list branches</li>
+              <li><code>git branch &lt;name&gt;</code> - create</li>
+              <li><code>git checkout &lt;br&gt;</code> - switch</li>
+              <li><code>git checkout -b &lt;br&gt;</code> - create & switch</li>
+              <li><code>git merge &lt;br&gt;</code> - merge</li>
+              <li><code>git branch -d &lt;br&gt;</code> - delete</li>
+            </ul>
+          </div>
+          <div class="guide-card">
+            <h3>Tips</h3>
+            <ul>
+              <li><kbd>Tab</kbd> - autocomplete</li>
+              <li><kbd>&uarr;</kbd><kbd>&darr;</kbd> - command history</li>
+              <li><kbd>Ctrl+C</kbd> - cancel input</li>
+              <li><kbd>Ctrl+L</kbd> - clear screen</li>
+              <li><code>echo "text" &gt; file</code> - write to file</li>
+              <li><code>help</code> - full command list</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer id="page-footer">
+      <p>Type <code>help</code> in the terminal to see all commands</p>
+    </footer>
   </div>
+
   <input id="hidden-input" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send">
   <script src="js/filesystem.js"></script>
   <script src="js/git.js"></script>
