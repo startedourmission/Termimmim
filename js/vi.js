@@ -28,18 +28,23 @@ class ViEditor {
     this.modified = false;
     this.lastKey = '';
 
-    const node = this.fs.getNode(path);
-    if (node && node.type === 'dir') {
-      this.active = false;
-      return `<span class="color-red">"${path}" is a directory</span>`;
-    }
+    if (path) {
+      const node = this.fs.getNode(path);
+      if (node && node.type === 'dir') {
+        this.active = false;
+        return `<span class="color-red">"${path}" is a directory</span>`;
+      }
 
-    if (node) {
-      this.lines = node.content.split('\n');
-      this.statusMsg = `"${path}" ${this.lines.length}L`;
+      if (node) {
+        this.lines = node.content.split('\n');
+        this.statusMsg = `"${path}" ${this.lines.length}L`;
+      } else {
+        this.lines = [''];
+        this.statusMsg = `"${path}" [New File]`;
+      }
     } else {
       this.lines = [''];
-      this.statusMsg = `"${path}" [New File]`;
+      this.statusMsg = '[No Name]';
     }
 
     this.render();
@@ -402,6 +407,10 @@ class ViEditor {
   }
 
   _save() {
+    if (!this.filePath) {
+      this.statusMsg = 'No file name (use :w filename)';
+      return;
+    }
     const content = this.lines.join('\n');
     const result = this.fs.writeFile(this.filePath, content, false);
     if (result.error) {

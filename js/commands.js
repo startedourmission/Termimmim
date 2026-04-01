@@ -392,9 +392,8 @@ class CommandHandler {
   }
 
   _vi(args) {
-    if (args.length === 0) return '<span class="color-red">usage: vi &lt;file&gt;</span>';
     if (!this.openVi) return '<span class="color-red">vi: editor not available</span>';
-    const err = this.openVi(args[0]);
+    const err = this.openVi(args[0] || '');
     return err || '';
   }
 
