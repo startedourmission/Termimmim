@@ -270,7 +270,8 @@ class CommandHandler {
 
   _cd(args) {
     const result = this.fs.changeDir(args[0]);
-    return result.error ? `<span class="color-red">${result.error}</span>` : '';
+    if (result.error) return `<span class="color-red">${result.error}</span>`;
+    return result.output || '';
   }
 
   _cat(args) {

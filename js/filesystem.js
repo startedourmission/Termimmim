@@ -25,6 +25,7 @@ class FileSystem {
       }
     };
     this.currentPath = '/home/user';
+    this.previousPath = null;
   }
 
   resolvePath(path) {
@@ -78,11 +79,24 @@ class FileSystem {
   }
 
   changeDir(path) {
-    if (!path || path === '~') { this.currentPath = '/home/user'; return {}; }
+    if (!path || path === '~') {
+      const old = this.currentPath;
+      this.currentPath = '/home/user';
+      this.previousPath = old;
+      return {};
+    }
+    if (path === '-') {
+      if (!this.previousPath) return { error: 'cd: OLDPWD not set' };
+      const old = this.currentPath;
+      this.currentPath = this.previousPath;
+      this.previousPath = old;
+      return { output: this.currentPath };
+    }
     const resolved = this.resolvePath(path);
     const node = this.getNode(resolved);
     if (!node) return { error: `cd: no such file or directory: ${path}` };
     if (node.type !== 'dir') return { error: `cd: not a directory: ${path}` };
+    this.previousPath = this.currentPath;
     this.currentPath = resolved;
     return {};
   }
