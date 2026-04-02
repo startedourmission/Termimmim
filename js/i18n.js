@@ -23,8 +23,8 @@ const I18N = {
   data: {
     // Header
     'header.subtitle': {
-      ko: '브라우저 기반 터미널 시뮬레이터',
-      en: 'Browser-based terminal simulator for practice',
+      ko: '터미널이 어려운 당신을 위해',
+      en: 'For those who find the terminal intimidating',
     },
     'footer.help': {
       ko: '터미널에 <code>help</code>를 입력하면 전체 명령어를 볼 수 있습니다',
